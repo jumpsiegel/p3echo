@@ -120,16 +120,6 @@ def approve_app():
             emitter.store(Extract(Txn.application_args[1], off.load(), Int(34))),
             sequence.store(Btoi(Extract(Txn.application_args[1], off.load() + Int(34), Int(8)))),
 
-            # Should be going up and never repeating.. If you want
-            # something that can take messages in any order, look at
-            # checkForDuplicate() in the token_bridge contract.  It is
-            # kind of a heavy lift but it can be done
-            #
-            # I am not doing any fancy "registation" of valid emitter
-            # contracts in this example..
-            MagicAssert(sequence.load() > App.globalGet(emitter.load())),
-            App.globalPut(emitter.load(), sequence.load()),
-
             # Now lets check to see if this vaa was actually signed by
             # the guardians.  We do this by confirming that the
             # previous txn in the group was to the wormhole core and
@@ -145,7 +135,7 @@ def approve_app():
             MagicAssert(Gtxn[tidx.load()].sender() == Txn.sender()),
 
             # we are all taking about the same vaa?
-            MagicAssert(Gtxn[tidx.load()].application_args[1] == Txn.application_args[1]),
+            MagicAssert(Gtxn[tidx.load()].application_args[1] == Extract(Txn.application_args[1], Int(2), Len(Txn.application_args[1]) - Int(2))),
 
             # check for hackery
             assert_common_checks(Gtxn[tidx.load()]),
