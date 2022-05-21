@@ -1,0 +1,9 @@
+{
+  "name": "p3echo",
+  "dependencies": {
+    "@certusone/wormhole-sdk": "^0.3.4",
+    "@improbable-eng/grpc-web-node-http-transport": "^0.15.0",
+    "ethers": "^5.6.6",
+    "jest": "^28.1.0"
+  }
+}

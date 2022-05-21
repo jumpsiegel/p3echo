@@ -57,6 +57,7 @@ class Account:
         print (privateKey)
         print ("    " + self.getMnemonic())
         print ("    " + self.addr)
+        print ("    " + decode_address(self.addr).hex())
 
     def getAddress(self) -> str:
         return self.addr
