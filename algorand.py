@@ -105,12 +105,6 @@ def approve_app():
             e.asset_close_to() == Global.zero_address()
         ))
 
-    @Subroutine(TealType.uint64)
-    def checkedGet(v) -> Expr:
-        maybe = App.globalGetEx(Txn.application_id(), v)
-        # If we assert here, it means we have not registered the emitter
-        return Seq(maybe, MagicAssert(maybe.hasValue()), maybe.value())
-        
     def receiveMessage():
         off = ScratchVar()
         emitter = ScratchVar()
@@ -130,7 +124,10 @@ def approve_app():
             # something that can take messages in any order, look at
             # checkForDuplicate() in the token_bridge contract.  It is
             # kind of a heavy lift but it can be done
-            MagicAssert(sequence.load() > checkedGet(emitter.load())),
+            #
+            # I am not doing any fancy "registation" of valid emitter
+            # contracts in this example..
+            MagicAssert(sequence.load() > App.globalGet(emitter.load())),
             App.globalPut(emitter.load(), sequence.load()),
 
             # Now lets check to see if this vaa was actually signed by
@@ -140,21 +137,15 @@ def approve_app():
             # vaa must be legit
             MagicAssert(Txn.group_index() > Int(0)),
             tidx.store(Txn.group_index() - Int(1)),
-            MagicAssert(And(
-                # Lets see if the vaa we are about to process was actually verified by the core
-                Gtxn[tidx.load()].type_enum() == TxnType.ApplicationCall,
-                Gtxn[tidx.load()].application_id() == App.globalGet(Bytes("coreid")),
-                Gtxn[tidx.load()].application_args[0] == Bytes("verifyVAA"),
-                Gtxn[tidx.load()].sender() == Txn.sender(),
 
-                # we are all taking about the same vaa?
-                Gtxn[tidx.load()].application_args[1] == Txn.application_args[1],
+            # Lets see if the vaa we are about to process was actually verified by the core
+            MagicAssert(Gtxn[tidx.load()].type_enum() == TxnType.ApplicationCall),
+            MagicAssert(Gtxn[tidx.load()].application_id() == App.globalGet(Bytes("tokenid"))),
+            MagicAssert(Gtxn[tidx.load()].application_args[0] == Bytes("completeTransfer")),
+            MagicAssert(Gtxn[tidx.load()].sender() == Txn.sender()),
 
-                # We all opted into the same accounts?
-                Gtxn[tidx.load()].accounts[0] == Txn.accounts[0],
-                Gtxn[tidx.load()].accounts[1] == Txn.accounts[1],
-                Gtxn[tidx.load()].accounts[2] == Txn.accounts[2],
-                )),
+            # we are all taking about the same vaa?
+            MagicAssert(Gtxn[tidx.load()].application_args[1] == Txn.application_args[1]),
 
             # check for hackery
             assert_common_checks(Gtxn[tidx.load()]),
@@ -246,7 +237,7 @@ if __name__ == "__main__":
 
     approval, clear = get_test_app(client)
 
-    globalSchema = transaction.StateSchema(num_uints=2, num_byte_slices=40)
+    globalSchema = transaction.StateSchema(num_uints=10, num_byte_slices=40)
     # localSchema is IMPORTANT.. you need 16 byte slices
     localSchema = transaction.StateSchema(num_uints=0, num_byte_slices=16) 
         

@@ -87,7 +87,7 @@ class AlgoTests {
         const TOKEN_BRIDGE_ID = BigInt(6);
 
         const Fee: number = 0;
-        var testapp: number = 46;
+        var testapp: number = 96;
         var dest = utils.hexZeroPad(BigNumber.from(testapp).toHexString(), 32).substring(2);
 
         const transferTxs = await transferFromAlgorand(
